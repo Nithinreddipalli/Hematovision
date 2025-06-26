@@ -1,0 +1,32 @@
+import tensorflow as tf
+from tensorflow.keras.applications import MobileNetV2
+from tensorflow.keras.models import Model
+from tensorflow.keras.layers import Dense, GlobalAveragePooling2D, Dropout, Input
+from tensorflow.keras.optimizers import Adam
+
+# Define input shape
+input_shape = (224, 224, 3)
+
+# Load base model
+base_model = MobileNetV2(weights='imagenet', include_top=False, input_tensor=Input(shape=input_shape))
+base_model.trainable = False  # Freeze layers
+
+# Add classification layers
+x = base_model.output
+x = GlobalAveragePooling2D()(x)
+x = Dropout(0.3)(x)
+x = Dense(128, activation='relu')(x)
+x = Dropout(0.3)(x)
+predictions = Dense(4, activation='softmax')(x)  # 4 blood cell classes
+
+# Final model
+model = Model(inputs=base_model.input, outputs=predictions)
+
+# Compile
+model.compile(optimizer=Adam(learning_rate=0.0001),
+              loss='categorical_crossentropy',
+              metrics=['accuracy'])
+
+# Save the untrained model
+model.save("Blood Cell.h5")
+print("✅ Model saved as Blood Cell.h5")
